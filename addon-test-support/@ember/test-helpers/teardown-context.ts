@@ -1,8 +1,8 @@
-import { TestContext } from './setup-context';
+import Ember from 'ember';
+import { TestContext, unsetContext } from './setup-context';
 import { Promise } from './-utils';
-import settled from './settled';
+import settled, { _teardownAJAXHooks } from './settled';
 import { _cleanupOnerror } from './setup-onerror';
-import { destroy } from '@ember/destroyable';
 
 /**
   Used by test framework addons to tear down the provided context after testing is completed.
@@ -32,7 +32,14 @@ export default function teardownContext(
     .then(() => {
       _cleanupOnerror(context);
 
-      destroy(context);
+      _teardownAJAXHooks();
+
+      // SAFETY: this is intimate API *designed* for us to override.
+      (Ember as any).testing = false;
+
+      context.owner.destroy();
+
+      unsetContext();
     })
     .finally(() => {
       if (waitForSettled) {

@@ -18,10 +18,6 @@ import { getApplication } from './application';
 import { Promise } from './-utils';
 import getTestMetadata from './test-metadata';
 import {
-  registerDestructor,
-  associateDestroyableChild,
-} from '@ember/destroyable';
-import {
   getDeprecationsForContext,
   getDeprecationsDuringCallbackForContext,
   DeprecationFailure,
@@ -186,19 +182,6 @@ export function resumeTest(): void {
   }
 
   context.resumeTest();
-}
-
-/**
-  @private
-  @param {Object} context the test context being cleaned up
-*/
-function cleanup(context: BaseContext) {
-  _teardownAJAXHooks();
-
-  // SAFETY: this is intimate API *designed* for us to override.
-  (Ember as any).testing = false;
-
-  unsetContext();
 }
 
 /**
@@ -386,8 +369,6 @@ export default function setupContext<T extends object>(
 
   _backburner.DEBUG = true;
 
-  registerDestructor(context, cleanup);
-
   _prepareOnerror(context);
 
   return Promise.resolve()
@@ -414,8 +395,6 @@ export default function setupContext<T extends object>(
       return buildOwner(getApplication(), getResolver());
     })
     .then((owner) => {
-      associateDestroyableChild(context, owner);
-
       Object.defineProperty(context, 'owner', {
         configurable: true,
         enumerable: true,
